@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI SMS Agent Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-online {
+            background-color: #10b981;
+        }
+
+        .status-offline {
+            background-color: #ef4444;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-top: 5px;
+        }
+
+        .conversations {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .conversations h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .conversation-item {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #f8fafc;
+        }
+
+        .conversation-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .phone-number {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .timestamp {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .message {
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 5px 0;
+            border-left: 3px solid #667eea;
+        }
+
+        .message.customer {
+            border-left-color: #10b981;
+        }
+
+        .message.assistant {
+            border-left-color: #667eea;
+        }
+
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s ease;
+        }
+
+        .refresh-btn:hover {
+            background: #5a67d8;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #64748b;
+        }
+
+        .error {
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 1px solid #fecaca;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI SMS Agent</h1>
+            <p>Real-time monitoring dashboard</p>
+        </div>
+
+        <div class="dashboard">
+            <div class="card">
+                <h3>System Status</h3>
+                <div id="systemStatus">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Statistics</h3>
+                <div id="statistics">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Configuration</h3>
+                <div id="configuration">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="conversations">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3>Recent Conversations</h3>
+                <button class="refresh-btn" onclick="loadData()">🔄 Refresh</button>
+            </div>
+            <div id="conversations">
+                <div class="loading">Loading conversations...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API endpoints
+        const API_BASE = window.location.origin;
+        const ENDPOINTS = {
+            status: '/status',
+            health: '/health'
+        };
+
+        // Load all data
+        async function loadData() {
+            try {
+                await Promise.all([
+                    loadSystemStatus(),
+                    loadStatistics(),
+                    loadConfiguration()
+                ]);
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showError('Failed to load dashboard data');
+            }
+        }
+
+        // Load system status
+        async function loadSystemStatus() {
+            try {
+                const response = await fetch(`${API_BASE}${ENDPOINTS.status}`);
+                const data = await response.json();
+                
+                const statusHtml = `
+                    <div class="stat-grid">
+                        <div class="stat-item">
+                            <div class="stat-number">
+                                <span class="status-indicator ${data.status === 'running' ? 'status-online' : 'status-offline'}"></span>
+                                ${data.status}
+                            </div>
+                            <div class="stat-label">Server Status</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">${data.port}</div>
+                            <div class="stat-label">Port</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">${data.environment}</div>
+                            <div class="stat-label">Environment</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">${data.activeConversations}</div>
+                            <div class="stat-label">Active Conversations</div>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('systemStatus').innerHTML = statusHtml;
+            } catch (error) {
+                document.getElementById('systemStatus').innerHTML = '<div class="error">Failed to load system status</div>';
+            }
+        }
+
+        // Load statistics
+        async function loadStatistics() {
+            try {
+                const response = await fetch(`${API_BASE}${ENDPOINTS.health}`);
+                const data = await response.json();
+                
+                const statsHtml = `
+                    <div class="stat-grid">
+                        <div class="stat-item">
+                            <div class="stat-number">${data.activeConversations || 0}</div>
+                            <div class="stat-label">Active Conversations</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">${new Date(data.timestamp).toLocaleTimeString()}</div>
+                            <div class="stat-label">Last Updated</div>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('statistics').innerHTML = statsHtml;
+            } catch (error) {
+                document.getElementById('statistics').innerHTML = '<div class="error">Failed to load statistics</div>';
+            }
+        }
+
+        // Load configuration status
+        async function loadConfiguration() {
+            try {
+                const response = await fetch(`${API_BASE}${ENDPOINTS.status}`);
+                const data = await response.json();
+                
+                const configHtml = `
+                    <div class="stat-grid">
+                        <div class="stat-item">
+                            <div class="stat-number">
+                                <span class="status-indicator ${data.twilioConfigured ? 'status-online' : 'status-offline'}"></span>
+                                ${data.twilioConfigured ? 'Configured' : 'Not Configured'}
+                            </div>
+                            <div class="stat-label">Twilio</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">
+                                <span class="status-indicator ${data.geminiConfigured ? 'status-online' : 'status-offline'}"></span>
+                                ${data.geminiConfigured ? 'Configured' : 'Not Configured'}
+                            </div>
+                            <div class="stat-label">Gemini AI</div>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('configuration').innerHTML = configHtml;
+            } catch (error) {
+                document.getElementById('configuration').innerHTML = '<div class="error">Failed to load configuration</div>';
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            document.querySelector('.container').insertBefore(errorDiv, document.querySelector('.dashboard'));
+            
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 5000);
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(loadData, 30000);
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html> 
