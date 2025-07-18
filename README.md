@@ -10,6 +10,9 @@ An intelligent SMS customer service agent built with Twilio and Google's Gemini 
 - 🔒 **Security**: Webhook signature validation and rate limiting
 - 📊 **Health Monitoring**: Built-in health check and status endpoints
 - 🧹 **Auto Cleanup**: Automatically cleans up old conversations
+- 🧪 **Test API**: Development testing without Twilio costs
+- 🖥️ **Web Dashboard**: Real-time monitoring and conversation management
+- 🎯 **Smart Escalation**: Automatically detects when human intervention is needed
 
 ## Prerequisites
 
@@ -104,8 +107,18 @@ The server will start on port 3000 (or the port specified in your `.env` file).
 - **GET** `/health` - Health check endpoint
 - **GET** `/status` - Detailed status information
 
+### Test & Development
+- **POST** `/api/test-sms` - Test SMS responses without Twilio costs
+- **GET** `/api/conversations` - List all active conversations
+- **GET** `/api/conversations/:phoneNumber` - Get conversation history for a phone number
+
+### Web Interfaces
+- **GET** `/dashboard` - Real-time monitoring dashboard
+- **GET** `/test` - Interactive test client for SMS simulation
+
 ## Testing
 
+### Option 1: Real SMS Testing (with Twilio costs)
 1. **Start the server**
    ```bash
    npm run dev
@@ -121,6 +134,33 @@ The server will start on port 3000 (or the port specified in your `.env` file).
 4. **Send an SMS** to your Twilio phone number
 
 5. **Check the logs** to see the conversation flow
+
+### Option 2: Free Development Testing (no Twilio costs)
+1. **Start the server**
+   ```bash
+   npm run dev
+   ```
+
+2. **Open the test client**
+   ```
+   http://localhost:3000/test
+   ```
+
+3. **Use the web interface** to test messages instantly
+
+4. **Or use the API directly**
+   ```bash
+   curl -X POST http://localhost:3000/api/test-sms \
+     -H "Content-Type: application/json" \
+     -d '{
+       "message": "Hello, what are your business hours?",
+       "phoneNumber": "+1234567890"
+     }'
+   ```
+
+### Option 3: Monitor Conversations
+- **Dashboard**: `http://localhost:3000/dashboard` - Real-time monitoring
+- **API**: `GET /api/conversations` - List all conversations
 
 ## Configuration Options
 
@@ -146,6 +186,8 @@ The server will start on port 3000 (or the port specified in your `.env` file).
 - Set up proper logging and monitoring
 - Use HTTPS in production
 - Set up proper error handling and alerts
+- Configure Content Security Policy for production
+- Disable test endpoints in production environment
 
 ### Deployment Options
 - **Heroku**: Easy deployment with environment variables
@@ -157,9 +199,12 @@ The server will start on port 3000 (or the port specified in your `.env` file).
 
 - ✅ Webhook signature validation
 - ✅ Rate limiting
-- ✅ Helmet.js security headers
+- ✅ Helmet.js security headers with CSP
 - ✅ Environment variable protection
 - ✅ Input validation
+- ✅ CORS configuration
+- ✅ File permissions (600 for .env)
+- ✅ Proxy trust configuration for rate limiting
 
 ## Troubleshooting
 
@@ -180,16 +225,42 @@ The server will start on port 3000 (or the port specified in your `.env` file).
    - Check phone number format
    - Ensure sufficient Twilio credits
 
+4. **Test API not working**
+   - Check server is running on correct port
+   - Verify CORS settings for development
+   - Check browser console for CSP errors
+
+5. **Web interface issues**
+   - Clear browser cache
+   - Check Content Security Policy settings
+   - Verify all static files are being served
+
 ### Debug Mode
 Enable debug logging by setting `NODE_ENV=development` in your `.env` file.
 
-## Contributing
+## Development Workflow
 
+### Testing Without Costs
+- Use the test client at `/test` for development
+- Test API endpoints directly with curl or Postman
+- Monitor conversations via dashboard at `/dashboard`
+- All testing is free - no Twilio SMS charges
+
+### Adding New Features
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+4. Test using the test client
+5. Add tests if applicable
+6. Submit a pull request
+
+### Code Structure
+- `server.js` - Main Express server and routes
+- `utils/aiHelper.js` - AI response generation and filtering
+- `config/database.js` - Conversation storage management
+- `public/` - Web interfaces (dashboard, test client)
+- `scripts/setup.js` - Interactive configuration
+- `test/` - Test suite
 
 ## License
 
