@@ -10,9 +10,12 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust proxy for rate limiting behind ngrok/proxies
+app.set('trust proxy', 1);
+
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
 
 // Initialize Twilio client
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
@@ -27,7 +30,13 @@ app.use(cors());
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: 100, // limit each IP to 100 requests per windowMs
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  // Use X-Forwarded-For header for IP detection when behind proxy
+  keyGenerator: (req) => {
+    return req.ip || req.connection.remoteAddress;
+  }
 });
 app.use(limiter);
 
