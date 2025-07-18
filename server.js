@@ -330,6 +330,57 @@ app.get('/api/conversations', (req, res) => {
   }
 });
 
+// Check product pricing endpoint
+app.get('/api/pricing/:productType', async (req, res) => {
+  try {
+    const { productType } = req.params;
+    const aiHelper = new (require('./utils/aiHelper'))(process.env.GEMINI_API_KEY);
+    
+    console.log(`🔍 Checking pricing for: ${productType}`);
+    const pricingInfo = await aiHelper.webScraper.getPricingInfo(productType);
+    
+    res.json({
+      success: true,
+      productType,
+      pricing: pricingInfo,
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('Error checking pricing:', error);
+    res.status(500).json({ 
+      error: 'Failed to check pricing',
+      details: error.message 
+    });
+  }
+});
+
+// Search products endpoint
+app.get('/api/search/:query', async (req, res) => {
+  try {
+    const { query } = req.params;
+    const aiHelper = new (require('./utils/aiHelper'))(process.env.GEMINI_API_KEY);
+    
+    console.log(`🔍 Searching for: ${query}`);
+    const products = await aiHelper.webScraper.searchProducts(query);
+    
+    res.json({
+      success: true,
+      query,
+      products,
+      count: products.length,
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('Error searching products:', error);
+    res.status(500).json({ 
+      error: 'Failed to search products',
+      details: error.message 
+    });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`AI SMS Agent server running on port ${PORT}`);
