@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI SMS Agent - Test Client</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #667eea;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .btn:hover {
+            background: #5a67d8;
+        }
+
+        .btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .response {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .response h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .message {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border-left: 3px solid #10b981;
+        }
+
+        .message.ai {
+            border-left-color: #667eea;
+        }
+
+        .message.customer {
+            border-left-color: #10b981;
+        }
+
+        .timestamp {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-top: 5px;
+        }
+
+        .error {
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 1px solid #fecaca;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+
+        .conversation-history {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .history-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            border-left: 3px solid #e5e7eb;
+        }
+
+        .history-item.customer {
+            border-left-color: #10b981;
+        }
+
+        .history-item.ai {
+            border-left-color: #667eea;
+        }
+
+        .quick-messages {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .quick-btn {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .quick-btn:hover {
+            background: #e5e7eb;
+            border-color: #9ca3af;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 AI SMS Test Client</h1>
+            <p>Test your AI agent without sending real SMS messages</p>
+        </div>
+
+        <div class="content">
+            <form id="testForm">
+                <div class="form-group">
+                    <label for="phoneNumber">Phone Number:</label>
+                    <input type="tel" id="phoneNumber" value="+1234567890" placeholder="+1234567890">
+                </div>
+
+                <div class="form-group">
+                    <label for="message">Message:</label>
+                    <textarea id="message" placeholder="Type your test message here..." required></textarea>
+                </div>
+
+                <div class="quick-messages">
+                    <button type="button" class="quick-btn" data-message="Hello, what are your business hours?">Business Hours</button>
+                    <button type="button" class="quick-btn" data-message="Do you offer refunds?">Refund Policy</button>
+                    <button type="button" class="quick-btn" data-message="What products do you sell?">Products</button>
+                    <button type="button" class="quick-btn" data-message="I want to speak to a human">Escalate</button>
+                    <button type="button" class="quick-btn" data-message="Thank you for your help!">Thank You</button>
+                </div>
+
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="simulateTwilio">
+                        <label for="simulateTwilio">Simulate Twilio response format</label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn" id="submitBtn">Send Test Message</button>
+            </form>
+
+            <div id="response" style="display: none;"></div>
+            <div id="conversationHistory" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+
+        function setMessage(text) {
+            document.getElementById('message').value = text;
+        }
+
+        async function sendTestMessage(formData) {
+            const submitBtn = document.getElementById('submitBtn');
+            const responseDiv = document.getElementById('response');
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Sending...';
+            responseDiv.style.display = 'none';
+            
+            try {
+                console.log('Sending request:', formData);
+                
+                const response = await fetch(`${API_BASE}/api/test-sms`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Response error:', errorText);
+                    displayError(`Server error: ${response.status} - ${errorText}`);
+                    return;
+                }
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                displayResponse(data);
+                loadConversationHistory(formData.phoneNumber);
+                
+            } catch (error) {
+                console.error('Fetch error:', error);
+                displayError('Network error: ' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Send Test Message';
+            }
+        }
+
+        function displayResponse(data) {
+            const responseDiv = document.getElementById('response');
+            
+            const html = `
+                <div class="response">
+                    <h3>✅ Test Message Sent Successfully</h3>
+                    
+                    <div class="message customer">
+                        <strong>Customer:</strong> ${data.request.message}
+                        <div class="timestamp">${new Date(data.request.timestamp).toLocaleString()}</div>
+                    </div>
+                    
+                    <div class="message ai">
+                        <strong>AI Response:</strong> ${data.response.aiMessage}
+                        <div class="timestamp">${new Date(data.response.timestamp).toLocaleString()}</div>
+                    </div>
+                    
+                    <p><strong>Phone Number:</strong> ${data.request.phoneNumber}</p>
+                    <p><strong>Total Messages:</strong> ${data.conversation.totalMessages}</p>
+                    
+                    ${data.twilioSimulation ? `
+                        <details style="margin-top: 15px;">
+                            <summary><strong>Twilio Simulation Data</strong></summary>
+                            <pre style="background: #f3f4f6; padding: 10px; border-radius: 4px; margin-top: 10px; font-size: 0.8rem;">${JSON.stringify(data.twilioSimulation, null, 2)}</pre>
+                        </details>
+                    ` : ''}
+                </div>
+            `;
+            
+            responseDiv.innerHTML = html;
+            responseDiv.style.display = 'block';
+        }
+
+        function displayError(message) {
+            const responseDiv = document.getElementById('response');
+            responseDiv.innerHTML = `<div class="error">❌ ${message}</div>`;
+            responseDiv.style.display = 'block';
+        }
+
+        async function loadConversationHistory(phoneNumber) {
+            try {
+                const response = await fetch(`${API_BASE}/api/conversations/${phoneNumber}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    displayConversationHistory(data.conversation.messages);
+                }
+            } catch (error) {
+                console.error('Failed to load conversation history:', error);
+            }
+        }
+
+        function displayConversationHistory(messages) {
+            const historyDiv = document.getElementById('conversationHistory');
+            
+            if (messages.length === 0) {
+                historyDiv.style.display = 'none';
+                return;
+            }
+            
+            const html = `
+                <div class="conversation-history">
+                    <h3>📱 Conversation History</h3>
+                    ${messages.map(msg => `
+                        <div class="history-item ${msg.role}">
+                            <strong>${msg.role === 'customer' ? 'Customer' : 'AI'}:</strong> ${msg.content}
+                            <div class="timestamp">${new Date(msg.timestamp).toLocaleString()}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            historyDiv.innerHTML = html;
+            historyDiv.style.display = 'block';
+        }
+
+        // Add event listeners for quick message buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const quickButtons = document.querySelectorAll('.quick-btn');
+            quickButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const message = this.getAttribute('data-message');
+                    setMessage(message);
+                });
+            });
+        });
+
+        document.getElementById('testForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const message = document.getElementById('message').value.trim();
+            const phoneNumber = document.getElementById('phoneNumber').value.trim();
+            const simulateTwilio = document.getElementById('simulateTwilio').checked;
+            
+            if (!message) {
+                displayError('Please enter a message');
+                return;
+            }
+            
+            const formData = {
+                message: message,
+                phoneNumber: phoneNumber || '+1234567890',
+                simulateTwilio: simulateTwilio
+            };
+            
+            console.log('Form data:', formData);
+            await sendTestMessage(formData);
+        });
+    </script>
+</body>
+</html> 

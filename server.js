@@ -24,8 +24,26 @@ const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_A
 const conversations = new Map();
 
 // Security middleware
-app.use(helmet());
-app.use(cors());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrcAttr: ["'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
+    },
+  },
+}));
+app.use(cors({
+  origin: true, // Allow all origins for development
+  credentials: true
+}));
 
 // Rate limiting
 const limiter = rateLimit({
@@ -179,6 +197,137 @@ app.get('/status', (req, res) => {
 // Dashboard endpoint
 app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Test client endpoint
+app.get('/test', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'test-client.html'));
+});
+
+// Test API endpoint for simulating SMS without Twilio
+app.post('/api/test-sms', async (req, res) => {
+  try {
+    const { message, phoneNumber = '+1234567890', simulateTwilio = false } = req.body;
+    
+    if (!message) {
+      return res.status(400).json({ 
+        error: 'Message is required',
+        example: {
+          message: "Hello, what are your business hours?",
+          phoneNumber: "+1234567890",
+          simulateTwilio: false
+        }
+      });
+    }
+    
+    console.log(`🧪 Test SMS from ${phoneNumber}: ${message}`);
+    
+    // Get conversation history
+    const conversation = conversations.get(phoneNumber) || { messages: [] };
+    const conversationHistory = conversation.messages.slice(-6);
+    
+    // Generate AI response
+    const aiResponse = await generateAIResponse(message, conversationHistory);
+    
+    // Store the conversation
+    storeConversation(phoneNumber, message, aiResponse, true);
+    storeConversation(phoneNumber, message, aiResponse, false);
+    
+    const response = {
+      success: true,
+      request: {
+        message,
+        phoneNumber,
+        timestamp: new Date().toISOString()
+      },
+      response: {
+        aiMessage: aiResponse,
+        timestamp: new Date().toISOString()
+      },
+      conversation: {
+        totalMessages: conversation.messages.length + 2,
+        history: conversationHistory.slice(-4) // Last 4 messages for context
+      }
+    };
+    
+    // Simulate Twilio response format if requested
+    if (simulateTwilio) {
+      response.twilioSimulation = {
+        sid: `SM${Date.now()}${Math.random().toString(36).substr(2, 9)}`,
+        status: 'delivered',
+        from: process.env.TWILIO_PHONE_NUMBER || '+1234567890',
+        to: phoneNumber,
+        body: aiResponse,
+        date_created: new Date().toISOString()
+      };
+    }
+    
+    console.log(`🤖 AI Response: ${aiResponse}`);
+    
+    res.json(response);
+    
+  } catch (error) {
+    console.error('Error in test SMS API:', error);
+    res.status(500).json({ 
+      error: 'Failed to process test SMS',
+      details: error.message 
+    });
+  }
+});
+
+// Get conversation history for a phone number
+app.get('/api/conversations/:phoneNumber', (req, res) => {
+  try {
+    const { phoneNumber } = req.params;
+    const conversation = conversations.get(phoneNumber);
+    
+    if (!conversation) {
+      return res.status(404).json({ 
+        error: 'Conversation not found',
+        phoneNumber 
+      });
+    }
+    
+    res.json({
+      phoneNumber,
+      conversation: {
+        messages: conversation.messages,
+        metadata: conversation.metadata,
+        lastActivity: conversation.lastActivity
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error getting conversation:', error);
+    res.status(500).json({ 
+      error: 'Failed to get conversation',
+      details: error.message 
+    });
+  }
+});
+
+// List all active conversations
+app.get('/api/conversations', (req, res) => {
+  try {
+    const conversationList = Array.from(conversations.entries()).map(([phoneNumber, conversation]) => ({
+      phoneNumber,
+      messageCount: conversation.messages.length,
+      lastActivity: conversation.lastActivity,
+      lastMessage: conversation.messages[conversation.messages.length - 1]?.content || 'No messages'
+    }));
+    
+    res.json({
+      totalConversations: conversationList.length,
+      conversations: conversationList
+    });
+    
+  } catch (error) {
+    console.error('Error listing conversations:', error);
+    res.status(500).json({ 
+      error: 'Failed to list conversations',
+      details: error.message 
+    });
+  }
 });
 
 // Start server
